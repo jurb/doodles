@@ -1,0 +1,190 @@
+<html lang="en"><head>
+		<meta charset="utf-8">
+		<title>Language Content Circles</title>
+<script src="//d3js.org/d3.v4.min.js"></script>
+<script src="d3-annotation.min.js"></script>
+<link rel="stylesheet" type="text/css" href="d3-annotation.css"></link>
+		<style type="text/css">
+        @import url(//fonts.googleapis.com/css?family=Droid+Sans|Droid+Sans+Mono|Oxygen);
+		 p, .c3-legend-item, text, .c3-tooltip-container {
+            /*font-family: Droid Sans;*/
+            font-family: Oxygen;
+            /*font-size: 13px;*/
+            color: rgba(0,0,0,.6);
+            fill: rgba(0,0,0,.6);
+            /*font-color: rgba(0,0,0,.4);*/
+        }
+
+		body { display: block;
+            margin: auto;
+            max-width: 700px;
+        }
+		</style>
+	</head>
+	<body>
+		<script type="text/javascript">
+
+d3.tsv("language-content.tsv", function(error, data) {
+  			if (error) throw error;
+ 			// Coerce the data to numbers.
+				data.forEach(function(d) {
+					d['Percentage of internet content'] = +d['Percentage of internet content'] ;
+					d['Percentage of internet users'] = +d['Percentage of internet users'];
+				});
+
+			//Width and height
+			var w = parseInt(d3.select('body').style('width'));
+			var h = parseInt(d3.select('body').style('height'));
+
+			
+			// Helper variables and functions
+			
+			function isPositiveAndEven(n){if (n%2 == 0){return true;} else {return false}}
+			
+			var datasetLength = data.length;
+			
+			
+			// Building the circles
+
+			// Where to vertically place the circles
+			var circleY = h/2
+
+			// Where to horizontically place the circles and everything else
+			var xScale = function(d, i) {
+						// the first circle is so big we need to manually place it;
+						if (i == 0){
+							return (d['Percentage of internet content'] * (w / 400))
+						} else {
+							// we use the width of the body and the length of the dataset 
+							// to dynamically set the x position of the circles.
+							// since we dynamically placed the first, you need to 
+							// change the magic numbers if you add/remove data
+							return (i + 3) * (w-50) / (datasetLength + 1.5)
+						}
+				   }
+
+			// calculate the circle radius from the data (i would love to turn this
+			// into one function or variable)
+			var contentRadius = function(d) {
+				return d['Percentage of internet content'] * (w / 400);}
+
+			var usersRadius = function(d) {
+				return d['Percentage of internet users'] * (w / 400);}
+
+			// Building the lines						
+
+			var lineY1 = function(d) {return (h/2) + ((d3.max([d['Percentage of internet content'], d['Percentage of internet users']])) * (w / 400)) + 10}
+
+			var lineY2 = function(d, i) {
+						if (i == 0){
+							return (h/2) + 120;
+							// return 0
+						} 
+						if (isPositiveAndEven(i) == true){return (h/2) + 50;}
+						
+						else {
+							return (h/2) + 80;
+						}
+				   }
+			
+			// Building the text
+
+			var textY = function(d, i) {
+						if (i == 0){
+							return (h/2) + 140;
+						} 
+						if (isPositiveAndEven(i) == true){return (h/2) + 70;}
+						
+						else {
+							return (h/2) + 100;
+						}
+				   }
+
+
+				   // Now we can start with the d3 stuff
+
+			// Make a main selection where we will append everything to
+			var mainSelection = d3.selectAll("body")
+						.append("svg")
+						.attr("width", w)
+						.attr("height", h).selectAll("circle")
+			    .data(data)
+			    .enter();
+
+				// Content circles
+			    mainSelection.append("circle")
+				.attr("cx", xScale)
+				   .attr("cy", circleY)
+				   .attr("r", contentRadius)
+				   .attr("fill", "#9ecae1");
+
+				   // Users circles
+				mainSelection.insert("circle")
+				.attr("cx", xScale)
+				   .attr("cy", circleY)
+				   .attr("r", usersRadius)
+				   .attr("stroke", "#3182bd")
+   				   .attr("fill-opacity", 0)
+				   .attr("stroke-width", 2);
+
+		
+				const type = d3.annotationLabel
+
+				const annotations = [{
+						note: {title: "English" },
+						//can use x, y directly instead of data
+						data: {Language: "English"},
+						// x: 10,
+						// y: 10,
+						dy: 137,
+						dx: 162
+					}]
+
+				const makeAnnotations = d3.annotation()
+				.editMode(false)
+				.type(type)
+				//accessors & accessorsInverse not needed
+				//if using x, y in annotations JSON
+				.accessors({
+					x:  xScale(d.),
+					y: d => y(d.close)
+				})
+				.accessorsInverse({
+					date: d => timeFormat(x.invert(d.x)),
+					close: d => y.invert(d.y)
+				})
+				.annotations(annotations)
+
+
+				mainSelection
+				.append("g")
+				.attr("class", "annotation-group")
+				.call(makeAnnotations);	
+		
+		// // Lines
+		// mainSelection.insert("line")
+		// 		.attr("x1", xScale)
+		// 		.attr("x2", xScale)
+		// 		.attr("y1", lineY1)
+		// 		.attr("y2", lineY2)  
+		// 		   .attr("fill", "none")
+		// 		   .attr("stroke", "#3182bd")
+		// 		   .attr("stroke-miterlimit", 1)
+
+		// // Text 
+		// mainSelection.insert("text")
+		// 		.attr("x", xScale)
+		// 		   .attr("y", textY)
+		// 		   .attr("text-anchor", "middle")
+		// 		   .attr("font-size", w / 50)
+		// 		//    .text(function(d) {return d['Language'];})
+		// 		   .text(function(d) {return d['Language'];})
+
+});
+
+
+		</script>
+
+
+
+</body></html>

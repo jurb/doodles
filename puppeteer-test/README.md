@@ -1,0 +1,1 @@
+An experiment with Puppeteer, gets the content of links by clicking them. Can be handy for sites that are hard to scrape with selectors (e.g. a series of buttons pointing to unique URLs)

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link href="//cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.min.css" rel="stylesheet" />
+		<script src="//cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
+		<style>
+		@import url(//fonts.googleapis.com/css?family=Droid+Sans|Droid+Sans+Mono|Oxygen);
+		body { display: block;
+		margin:auto;
+		}
+		p, .c3-legend-item, text, .c3-tooltip-container {
+		font-family: Oxygen;
+		font-size: 12px;
+		color: rgba(0,0,0,.6);
+		fill: rgba(0,0,0,.6);
+		}
+		.c3-tooltip th {
+		background-color: #aaa;
+		font-size: 13px;
+		padding: 2px 5px;
+		text-align: left;
+		color: #FFF;
+		}
+		.c3-line {
+			stroke-width: 2px;
+		}
+		.c3-grid line {
+				stroke: indianred !important;
+				}
+				.c3 line, .c3 path {
+				stroke: lightgrey;
+				}
+				.tick line{ opacity: 0; }
+		</style>
+	</head>
+	<body>
+		<div id="chart"><svg></svg></div>
+		<script>
+			var chart = c3.generate({
+			bindto: d3.select('#chart'),
+			data: {
+				x: 'Date',
+				columns: [['Date', '1995-12-01', '1996-12-01', '1997-12-01', '1998-12-01', '1999-12-01', '2000-03-01', '2000-07-01', '2000-12-01', '2001-03-01', '2001-06-01', '2001-08-01', '2002-04-01', '2002-07-01', '2002-09-01', '2003-03-01', '2003-09-01', '2003-10-01', '2003-12-01', '2004-02-01', '2004-05-01', '2004-10-01', '2004-12-01', '2005-03-01', '2005-06-01', '2005-09-01', '2005-11-01', '2005-12-01', '2006-03-01', '2006-06-01', '2006-09-01', '2006-12-01', '2007-03-01', '2007-06-01', '2007-09-01', '2007-12-01', '2008-03-01', '2008-06-01', '2008-09-01', '2008-12-01', '2009-03-01', '2009-06-01', '2009-09-01', '2009-12-01', '2010-06-01', '2010-09-01', '2011-03-01', '2011-06-01', '2011-09-01', '2011-12-01', '2012-03-01', '2012-06-01', '2012-09-01', '2012-12-01', '2013-12-01', '2014-06-01', '2014-12-01', '2015-06-01', '2015-12-01', '2016-06-01', '2016-09-01'],['Percentage of global population online', 0.004, 0.009000000000000001, 0.017, 0.036000000000000004, 0.040999999999999995, 0.05, 0.059000000000000004, 0.057999999999999996, 0.076, 0.079, 0.086, 0.086, 0.091, 0.094, 0.09699999999999999, 0.106, 0.107, 0.111, 0.115, 0.11699999999999999, 0.127, 0.127, 0.139, 0.146, 0.149, 0.152, 0.157, 0.157, 0.16, 0.16699999999999998, 0.16699999999999998, 0.172, 0.17800000000000002, 0.18899999999999997, 0.2, 0.21100000000000002, 0.21899999999999997, 0.225, 0.235, 0.23800000000000002, 0.247, 0.256, 0.266, 0.287, 0.28800000000000003, 0.302, 0.304, 0.315, 0.327, 0.33299999999999996, 0.34299999999999997, 0.348, 0.35700000000000004, 0.39, 0.423, 0.424, 0.45, 0.46399999999999997, 0.495, 0.501],],
+				type: 'spline',
+				
+				},
+			point: {
+				r: 1
+				},
+			grid: {
+				focus:{
+				show: false
+				},
+				x: {
+					show: false
+				},
+				y: {
+					show: false,
+					
+					}
+				},
+			tooltip: {
+				format: {
+				title: d3.time.format("%Y-%m"),
+				value: d3.format('.2p')
+				}
+				},
+			axis: {
+				y: {
+					min: 0.00, max: 1, padding: {top:0, bottom:0},
+					tick: {
+							values: [0,0.5,1],
+							format: d3.format('p')
+						}
+				},
+				x: {
+					type: 'timeseries',
+					
+						label: 	{text: '',
+							position: 'outer-right'
+							},
+						tick: {
+							values: ['2000-01-01', '2005-01-01', '2010-01-01', '2015-01-01'],
+					format: '%Y',
+					culling: {
+				max: 6
+							}
+						}
+					}
+				},
+			legend: {
+				// remove legend interaction
+				item: {
+				            onclick: function () {}
+				        },
+				padding: 25,
+				},
+			padding: {
+				right: 10
+				}
+		});
+	</script>
+</body>
+</html>

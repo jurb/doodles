@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leaflet and D3 Map</title>
+    <meta charset="utf-8" />
+    <link
+        rel="stylesheet"
+        href="//cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css"
+    />
+    <style>
+    #map {
+  /*width: 960px;*/
+  height: 500px;
+}
+
+svg {
+  position: relative;
+}
+
+path {
+  fill: #000;
+  fill-opacity: .2;
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+path:hover {
+  fill: brown;
+  fill-opacity: .7;
+}
+
+</style>
+
+
+</head>
+<body>
+
+<p id="map" class="leaflet-container leaflet-fade-anim" tabindex="0" style="position: relative;"></p>
+
+	<script src="//d3js.org/d3.v4.min.js"></script>
+
+    <script
+        src="//cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js">
+    </script>
+
+    <script>
+
+        var map = L.map('map').setView([47.301, -120.877], 7);
+        mapLink =
+            '<a href="//openstreetmap.org">OpenStreetMap</a>';
+        L.tileLayer(
+            '//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            	// '//{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; ' + mapLink + ' Contributors',
+            // maxZoom: 7,
+            // minZoom: 7,
+            }).addTo(map);
+		// Add an SVG element to Leaflet’s overlay pane
+		var svg = d3.select(map.getPanes().overlayPane).append("svg"),
+			g = svg.append("g").attr("class", "leaflet-zoom-hide");
+
+
+		d3.json("wash-deaths-colorbrew-geo.json", function(error, geoShape) {
+			if (error) throw error;
+
+		//  create a d3.geo.path to convert GeoJSON to SVG
+		var transform = d3.geoTransform({point: projectPoint}),
+            	path = d3.geoPath().projection(transform);
+
+		// create path elements for each of the features
+		var feature = g.selectAll("path")
+			.data(geoShape.features)
+			.enter().append("path");
+
+		map.on("viewreset", reset),
+		map.on("zoom", reset);
+		reset();
+
+		// fit the SVG element to leaflet's map layer
+		function reset() {
+			var bounds = path.bounds(geoShape),
+			    topLeft = bounds[0],
+				bottomRight = bounds[1];
+
+			svg .attr("width", bottomRight[0] - topLeft[0])
+				.attr("height", bottomRight[1] - topLeft[1])
+				.style("left", topLeft[0] + "px")
+				.style("top", topLeft[1] + "px");
+
+			g .attr("transform", "translate(" + -topLeft[0] + "," + -topLeft[1] + ")");
+			// initialize the path data
+    feature.attr("d", path)
+            		.style("fill", function(d) { return d.properties.fill; })
+    				.style("fill-opacity", 0.7)
+    				// .style("stroke", 1)
+    				// .style("stroke-opacity", 0.3);
+  }
+
+  // Use Leaflet to implement a D3 geometric transformation.
+  function projectPoint(x, y) {
+    var point = map.latLngToLayerPoint(new L.LatLng(y, x));
+    this.stream.point(point.x, point.y);
+  }
+
+
+});
+
+
+</script>
+<svg width="960" height="500"><g id="legend" transform="translate(0,15)" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle"><rect height="8" x="0" width="31.25" fill="#fef0d9"></rect><rect height="8" x="31.25" width="31.25" fill="#fdcc8a"></rect><rect height="8" x="62.5" width="62.5" fill="#fc8d59"></rect><rect height="8" x="125" width="125" fill="#e34a33"></rect><rect height="8" x="250" width="250" fill="#b30000"></rect><g class="tick" opacity="1" transform="translate(31.25,0)"><line stroke="#000" y2="13" x1="0.5" x2="0.5"></line><text fill="#000" y="16" x="0.5" dy="0.71em">100</text></g><g class="tick" opacity="1" transform="translate(62.5,0)"><line stroke="#000" y2="13" x1="0.5" x2="0.5"></line><text fill="#000" y="16" x="0.5" dy="0.71em">200</text></g><g class="tick" opacity="1" transform="translate(125,0)"><line stroke="#000" y2="13" x1="0.5" x2="0.5"></line><text fill="#000" y="16" x="0.5" dy="0.71em">400</text></g><g class="tick" opacity="1" transform="translate(250,0)"><line stroke="#000" y2="13" x1="0.5" x2="0.5"></line><text fill="#000" y="16" x="0.5" dy="0.71em">800</text></g><g class="tick" opacity="1" transform="translate(500,0)"><line stroke="#000" y2="13" x1="0.5" x2="0.5"></line><text fill="#000" y="16" x="0.5" dy="0.71em">1600</text></g><text fill="#000" font-weight="bold" text-anchor="start" y="-6">Number of deaths in 2016</text></g></svg>
+
+</body>
+</html>

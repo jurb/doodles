@@ -1,0 +1,62 @@
+<html lang="en"><head>
+		<meta charset="utf-8">
+		<title>Language Content Circles</title>
+<script src="//d3js.org/d3.v4.min.js"></script>
+		<style type="text/css">
+			/* No style rules here yet */
+		</style>
+	</head>
+	<body>
+		<script type="text/javascript">
+
+d3.tsv("language-content.tsv", function(error, data) {
+  			if (error) throw error;
+ 			// Coerce the data to numbers.
+				data.forEach(function(d) {
+					d['Percentage of internet content'] = +d['Percentage of internet content'] ;
+					d['Percentage of internet users'] = +d['Percentage of internet users'];
+				});
+
+			//Width and height
+			var w = 1500;
+			var h = 350;
+
+			//Data
+
+			var selection = d3.selectAll("body")
+						.append("svg")
+						.attr("width", w)
+						.attr("height", h).selectAll("circle")
+			    .data(data)
+			    .enter();
+						
+			    selection.append("circle")
+				.attr("cx", function(d, i) {
+						return (i * 120) + 100;
+					})
+				   .attr("cy", h/2)
+				   .attr("r", function(d) {
+						return d['Percentage of internet content'] * 2;
+				   })
+				   .attr("fill", "red");
+
+				selection.insert("circle")
+				.attr("cx", function(d, i) {
+						return (i * 120) + 100;
+					})
+				   .attr("cy", h/2)
+				   .attr("r", function(d) {
+						return d['Percentage of internet users'] * 3;
+				   })
+				   .attr("stroke", "orange")
+   				   .attr("fill-opacity", 0)
+				   .attr("stroke-width", 2);
+
+			
+
+});
+		</script>
+
+
+
+</body></html>

@@ -1,0 +1,107 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="description" content="$1">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Visual FizzBuzz</title>
+     <script src="//d3js.org/d3.v4.min.js"></script>  
+     <style>
+       @import url(//fonts.googleapis.com/css?family=Droid+Sans|Droid+Sans+Mono|Oxygen);
+
+        text {
+            font-size: 10px;
+            font-family: Droid Sans, sans-serif;
+        }
+        div {
+            font-size: 36px;
+            font-family: Droid Sans, sans-serif;
+        }
+    </style>
+    </head>
+    <body>
+    <script>
+
+        function range(start, end, step, offset) {
+                var len = (Math.abs(end - start) + ((offset || 0) * 2)) / (step || 1) + 1;
+                var direction = start < end ? 1 : -1;
+                var startingPoint = start - (direction * (offset || 0));
+                var stepSize = direction * (step || 1);
+                
+                return Array(len).fill(0).map(function(_, index) {
+                    return startingPoint + (stepSize * index);
+                });
+                }
+
+var selection = d3.select("body")
+    .append('svg')
+    .attr('width', 3000)
+    .attr('height', 300)
+    .selectAll('rect')
+    .data(range(1,100))
+    .enter()
+
+    selection.append("rect")
+    .attr('x', function(d,i){return (i*14)})
+    .attr('y', function(d){return 150 - d})
+    .attr('height', function(d){return d})
+    .attr('width', 13)
+    .style('fill', function(d){if (d % 5 && d % 3) {
+    return 'Gainsboro'}
+    else if (d % 15 === 0) {
+        return 'GoldenRod';
+    } 
+    else if (d % 3 === 0) {
+        return 'MediumSpringGreen ';
+    } 
+
+    // If d is divisible by 5 with no remainder, append Buzz
+    else if (d % 5 === 0) {
+        return '#FFA07A';
+    }})
+    .on("mouseover", function(d){if (d % 5 && d % 3) {
+    displaywindow.text(d + "...")}
+    else if (d % 15 === 0) {
+        displaywindow.text('FizzBuzz!!!');
+    } 
+    else if (d % 3 === 0) {
+        displaywindow.text('Fizz!');
+    } 
+    else if (d % 5 === 0) {
+        displaywindow.text('Buzz!');
+    }})
+    .on("mouseout", function(){displaywindow.text("")})
+
+
+    selection.append("text")
+    .attr('x', function(d,i){return (i*14) - 2})
+    .attr('y', 170)
+    // .attr('height', function(d){return d})
+    // .attr('width', 5)
+    .text(function(d){return d})
+    .style('fill', function(d){if (d % 5 && d % 3) {
+    return 'Gainsboro'}
+    else if (d % 15 === 0) {
+        return 'GoldenRod';
+    } 
+    else if (d % 3 === 0) {
+        return 'MediumSpringGreen ';
+    } 
+    else if (d % 5 === 0) {
+        return '#FFA07A';
+    }})
+
+var displaywindow = d3.select("body")
+    .append("div")
+    .style("position", "absolute")
+    .style('top', 30)
+    .style('left', 30)
+    .style("z-index", "10")
+    .style("visibility", "visible")
+    // .style("background", "#000")
+    .text("FizzBuzz!");
+
+
+
+</script> 
+    </body>
+</html>

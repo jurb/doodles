@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <link href="//cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.min.css" rel="stylesheet" />
+        <script src="//cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
+               <style>
+        @import url(//fonts.googleapis.com/css?family=Droid+Sans|Droid+Sans+Mono|Oxygen);
+
+        body { display: block;
+            /*height:100%;*/
+            /*width:100%;*/
+            margin:0px 0px 0px 0px;
+            /*background: #EADBC4;*/
+        }
+
+        p, .c3-legend-item, text, .c3-tooltip-container {
+            /*font-family: Droid Sans;*/
+            font-family: Oxygen;
+            font-size: 13px;
+            color: rgba(0,0,0,.6);
+            fill: rgba(0,0,0,.6);
+            /*font-color: rgba(0,0,0,.4);*/
+        }
+
+
+        .c3-tooltip th {
+            background-color: #aaa;
+            font-size: 13px;
+            padding: 2px 5px;
+            text-align: left;
+            color: #FFF;
+        }
+
+        .c3-line {
+        	stroke-width: 4px;
+        }
+
+        </style>
+           </head>
+    <body>
+    	<div id="chart"><svg></svg></div>
+    	<script>
+
+		var chart = c3.generate({
+		  bindto: d3.select('#chart'),
+		  // size: {width: 640},
+		  data: {
+		  	x: 'Date',
+		    columns: [['Date', '1990-03-20', '1990-09-22', '1991-03-20', '1991-09-22', '1992-03-20', '1992-09-22', '1993-03-20', '1993-09-22', '1994-03-20', '1994-09-22', '1995-03-20', '1995-09-22', '1996-03-20', '1996-09-22', '1997-03-20', '1997-09-22', '1998-03-20', '1998-09-22', '1999-03-20', '1999-09-22', '2000-03-20', '2000-09-22', '2001-03-20'],
+		    ['Forecast 4 years earlier', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', '0.0332126020806', '0.0342464123882', '0.0339387356978', '0.0329110752019', '0.0362024853592', '0.0374115378251', '0.0429076540747', '0.044434541852', '0.0450007018505', '0.0445795948719', '0.0447528985117', '0.0455374510893'],
+		    ['Real GDP growth', '0.0218913066038', '0.0225544911457', '0.0060625225096', '0.0062837219238', '0.0179094499351', '0.0172839412778', '0.0249338427443', '0.0484961441581', '0.0501872363161', '0.0508688131787', '0.0515333330028', '0.0516576942759', '0.0302142805835', '0.0283376173111', '-0.0052359875604', '-0.0066318430404', '0.0526516805989', '0.0513665222505', '0.0395427523989', '0.0390465161855', '0.0322064455892', '0.0336534493397', '0.034081949462', '0.0330780852314', '0.0341060580879', '0.03418264978', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan', 'nan'],],
+		    type: 'bar',
+		    // colors: {'Forecast 4 years earlier': '#fc9272', 'Real GDP growth': '#de2d26'}
+		  },
+		  point: {
+		    r: 1
+		  },
+		  grid: {
+		    focus:{
+		        show: false
+		      },
+		    x: {
+		      	// show: true
+		    },
+		    y: {
+		    	show: true
+		    }
+		  },
+		      tooltip: {
+		        format: {
+		            // value: function (value, ratio, id) {
+		            //     var format = id === ['Forecast 5 years earlier', 'Real GDP Growth'] ? d3.format(',') : d3.format('.2%');
+		            //     return format(value);
+		            // }
+		           title: d3.time.format("%Y-%m"),
+		           value: d3.format('.2p') // apply this format to both y and y2
+		        }
+		    },
+		    axis: {
+		        y: {
+		        	label: 	{text: 'Growth percentage',
+		        			 position: 'outer-top'
+		        			},
+		        	tick: {
+		        			format: d3.format('p') // apply this format to both y and y2
+		        		}
+		        },
+		        x: {
+		            // show: false,
+		            type: 'timeseries',
+		        	label: 	{text: 'Year',
+		        			 position: 'outer-right'
+		        			},
+		        		tick: {
+		                format: '%Y',
+		                culling: {
+		                max: 4
+		            }
+		                // fit: true,
+		                // outer: true
+		            }
+		        }
+
+
+		    },
+		    legend: {
+		        // amount of padding to put between each legend element
+		        padding: 5,
+		        // define custom height and width for the legend item tile
+		        item: {
+		            tile: {
+		                width: 15,
+		                height: 2
+		            }
+		        }
+		    },
+		    padding: {
+		      right: 50
+		    }
+
+		});
+
+		// function hideMoneySpent(){chart.hide(['Money spent']);}
+		// function showMoneySpent(){chart.show(['Money spent']);}
+		// function hideMoneyEarned(){chart.hide(['Money earned']);}
+		// function showMoneyEarned(){chart.show(['Money earned']);}
+
+     	</script>
+    </body>
+<!--     <p onclick="hideMoneySpent();">Hide Money Spent</p>
+    <p onclick="showMoneySpent();">Show Money Spent</p>
+    <p onclick="hideMoneyEarned();">Hide Money Earned</p>
+    <p onclick="showMoneyEarned();">Show Money Earned</p> -->
+
+</html>

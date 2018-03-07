@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <link href="//cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.min.css" rel="stylesheet" />
+        <script src="//cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
+               <style>
+        @import url(//fonts.googleapis.com/css?family=Droid+Sans|Droid+Sans+Mono|Oxygen);
+
+        body { display: block;
+            /*height:100%;*/
+            /*width:100%;*/
+            margin:0px 0px 0px 0px;
+            background: #EADBC4;
+        }
+
+		.chart{
+		  width: 100%;
+		  height: 100%;
+		  min-height: 400px;
+		}
+        p, .c3-legend-item, text, .c3-tooltip-container {
+            /*font-family: Droid Sans;*/
+            font-family: Oxygen;
+            font-size: 13px;
+            color: rgba(0,0,0,.6);
+            fill: rgba(0,0,0,.6);
+            /*font-color: rgba(0,0,0,.4);*/
+        }
+
+
+        .c3-tooltip th {
+            background-color: #aaa;
+            font-size: 13px;
+            padding: 2px 5px;
+            text-align: left;
+            color: #FFF;
+        }
+
+        .c3-line {
+        	stroke-width: 4px;
+        }
+
+        </style>
+           </head>
+    <body>
+    	<div id="chart"><svg></svg></div>
+    	<script>
+
+		var chart = c3.generate({
+		  bindto: d3.select('#chart'),
+		  data: {
+		  	x: 'Date',
+		    columns: [
+		      ['Date', '2013-01-01', '2013-01-02', '2013-01-03', '2013-01-04', '2013-01-05', '2013-01-06'],
+		      ['Money spent', 300, 200, 100, 390, 150, 250],
+		      ['Money earned', 50, 250, 10, 40, 15, 25]
+		    ],
+		    type: 'spline',
+		    colors: {'Money spent': '#fc9272', 'Money earned': '#de2d26'}
+		  },
+		  point: {
+		    r: 4
+		  },
+		  grid: {
+		    focus:{
+		        show:false
+		      },
+		    x: {
+		      show: true
+		    },
+		    y: {
+		    	show: true
+		    }
+		  },
+		      tooltip: {
+		        format: {
+		            value: function (value, ratio, id) {
+		                var format = id === ['Money earned', 'Money spent'] ? d3.format(',') : d3.format('$');
+		                return format(value);
+		            }
+		//            value: d3.format(',') // apply this format to both y and y2
+		        }
+		    },
+		    labels: {
+		    //            format: function (v, id, i, j) { return "Default Format"; },
+		                format: {
+		                    'Money spent': d3.format('$'),
+		                    'Money earned': d3.format('$')
+		    //                data1: function (v, id, i, j) { return "Format for data1"; },
+		                }
+		            },
+		    axis: {
+		        y: {
+		        	// inner: true,
+		        	tick: {
+		                // outer: false,
+		                // culling: false
+		        	}
+		        },
+		        x: {
+		            // show: false,
+		            type: 'timeseries',
+		            tick: {
+		                format: '%Y-%m-%d',
+		                culling: {max: 4},
+		                // outer: false
+		            }
+		        }
+		    },
+		    legend: {
+		        // amount of padding to put between each legend element
+		        padding: 5,
+		        // define custom height and width for the legend item tile
+		        item: {
+		            tile: {
+		                width: 15,
+		                height: 2
+		            }
+		        }
+		    },
+		    padding: {
+		      right: 50
+		    }
+
+		});
+
+		// function hideMoneySpent(){chart.hide(['Money spent']);}
+		// function showMoneySpent(){chart.show(['Money spent']);}
+		// function hideMoneyEarned(){chart.hide(['Money earned']);}
+		// function showMoneyEarned(){chart.show(['Money earned']);}
+
+     	</script>
+    </body>
+<!--     <p onclick="hideMoneySpent();">Hide Money Spent</p>
+    <p onclick="showMoneySpent();">Show Money Spent</p>
+    <p onclick="hideMoneyEarned();">Hide Money Earned</p>
+    <p onclick="showMoneyEarned();">Show Money Earned</p> -->
+
+</html>

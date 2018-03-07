@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.11/d3.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.1/nv.d3.min.js"></script>
+<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.1/nv.d3.min.css">
+<style>
+@import url(//fonts.googleapis.com/css?family=Droid+Sans|Droid+Sans+Mono);
+
+#chart svg {
+  /*min-width: 500px;*/
+}
+
+.nvd3 text {
+    font-family: Droid Sans;
+}
+
+.nvtooltip {
+    font-family: Droid Sans;
+}
+
+.nv-label text{
+    font-family: Droid Sans;
+}
+
+.nv-legend-text {
+    font-family: Droid Sans;
+}
+
+body { display: block;
+margin: 0;}
+
+</style>
+<div id="chart"><svg width="800" height="500"></svg></div>
+<script>
+
+var h = 100;
+var r = h/2;
+var arc = d3.svg.arc().outerRadius(r);
+
+var data = [
+    {"label":"Count of 'Working well'", "value":122},
+    {"label":"Not working well", "value":28},
+    {"label":"Lost phone", "value":16},
+];
+
+
+var colors = [
+    '#BBE9DB',
+    '#AECCC6',
+    '#9BA6A5',
+    // 'rgb(239, 183, 182)'
+]
+
+
+nv.addGraph(function() {
+    var chart = nv.models.pieChart()
+        .x(function(d) { return d.label })
+        .y(function(d) { return d.value })
+        .color(colors)
+        .showLabels(true).valueFormat(d3.format('f'))
+        .labelType("percent")
+        .donut(true).donutRatio(.5) /* Trick to make the labels go inside the chart*/
+    ;
+    nv.utils.windowResize(chart.update);
+
+    d3.select("#chart svg")
+        .datum(data)
+        .transition().duration(1200)
+        .call(chart)
+    ;
+
+    d3.selectAll(".nv-label text")
+        /* Alter SVG attribute (not CSS attributes) */
+        .attr("transform", function(d){
+            d.innerRadius = -50;
+            d.outerRadius = r;
+            return "translate(" + arc.centroid(d) + ")";}
+        )
+        .attr("text-anchor", "middle")
+        /* Alter CSS attributes */
+        .style({"font-size": "0.8em"})
+    ;
+
+    /* Replace bullets with blocks */
+    d3.selectAll('.nv-series').each(function(d,i) {
+        var group = d3.select(this),
+            circle = group.select('circle');
+        var color = circle.style('fill');
+        circle.remove();
+        var symbol = group.append('path')
+            .attr('d', d3.svg.symbol().type('square'))
+            .style('stroke', color)
+            .style('fill', color)
+            // ADJUST SIZE AND POSITION
+            .attr('transform', 'scale(1.5) translate(-2,0)')
+    });
+
+    nv.utils.windowResize(chart.update);
+    return chart;
+});
+
+
+
+
+</script>

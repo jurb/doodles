@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <link href="//cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.min.css" rel="stylesheet" />
+        <script src="//cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
+               <style>
+        @import url(//fonts.googleapis.com/css?family=Droid+Sans|Droid+Sans+Mono|Oxygen);
+
+        body { display: block;
+            /*height:100%;*/
+            /*width:100%;*/
+            margin:0px 0px 0px 0px;
+            /*background: #EADBC4;*/
+        }
+
+		.chart{
+		  /*width: 500px;*/
+		  /*height: 300px;*/
+		  /*min-height: 300px;*/
+		  /*min-width: 300px;*/
+		}
+        p, .c3-legend-item, text, .c3-tooltip-container {
+            /*font-family: Droid Sans;*/
+            font-family: Oxygen;
+            font-size: 13px;
+            color: rgba(0,0,0,.6);
+            fill: rgba(0,0,0,.6);
+            /*font-color: rgba(0,0,0,.4);*/
+        }
+
+
+        .c3-tooltip th {
+            background-color: #aaa;
+            font-size: 13px;
+            padding: 2px 5px;
+            text-align: left;
+            color: #FFF;
+        }
+
+        .c3-line {
+        	stroke-width: 4px;
+        }
+
+
+        </style>
+           </head>
+    <body>
+    	<div id="chart"><svg></svg></div>
+    	<script>
+
+
+var nameData = ['Adams', 'Asotin', 'Benton', 'Chelan', 'Clallam', 'Clark', 'Columbia', 'Cowlitz', 'Douglas', 'Ferry', 'Franklin', 'Garfield', 'Grant', 'Grays Harbor', 'Island', 'Jefferson', 'King', 'Kitsap', 'Kittitas', 'Klickitat', 'Lewis', 'Lincoln', 'Mason', 'Okanogan', 'Pacific', 'Pend Oreille', 'Pierce', 'San Juan', 'Skagit', 'Skamania', 'Snohomish', 'Spokane', 'Stevens', 'Thurston', 'Wahkiakum', 'Walla Walla', 'Whatcom', 'Whitman', 'Yakima'];
+var value1Data = ['Teen Birth %', 0.089, 0.040, 0.039, 0.039, 0.031, 0.026, 0.029, 0.043, 0.040, 0.032, 0.066, NaN, 0.064, 0.042, 0.021, 0.023, 0.017, 0.023, 0.011, 0.032, 0.040, 0.024, 0.041, 0.056, 0.037, 0.037, 0.031, 0.015, 0.039, 0.030, 0.021, 0.027, 0.033, 0.023, 0.033, 0.029, 0.018, 0.004, 0.063];
+var value2Data = ['% Some College', 0.371, 0.637, 0.656, 0.472, 0.601, 0.644, 0.707, 0.579, 0.507, 0.577, 0.426, 0.680, 0.445, 0.540, 0.690, 0.677, 0.782, 0.711, 0.671, 0.601, 0.552, 0.529, 0.550, 0.490, 0.529, 0.599, 0.629, 0.650, 0.574, 0.648, 0.687, 0.697, 0.577, 0.707, 0.469, 0.636, 0.710, 0.845, 0.407];        
+
+var chart = c3.generate({
+    data: {
+        xs: {
+           'Teen Birth %': value2Data[0]
+        },
+        // iris data from R
+        columns: [
+            value1Data,
+            value2Data
+        ],
+        type: 'scatter'
+    },
+    axis: {
+        x: {
+            padding: {
+                    left: 0,
+                    right: 0.02,
+                    },
+            min: 0,
+            max: 1,
+            // max: 0.1,
+            label: {
+                  text: value2Data[0],
+                position: 'outer-center',
+                    },
+            tick: {
+                outer: false,
+                fit: false,
+                culling: 5,
+                format: d3.format('.2p')
+            }
+        },
+        y: {
+            // min: 0.01,
+            // max: 1,
+            label: {
+                  text: value1Data[0],
+                position: 'outer-middle',
+                    },
+            tick: {
+                outer: false,
+                fit: true,
+                format: d3.format('.2p')
+            }
+        }
+    },
+    legend: {
+        show: false,
+},
+tooltip: {
+        format: {
+            title: function(x) {
+                var indOfVal = value2Data.indexOf(x);
+                return nameData[indOfVal - 1]
+            },
+           name:function(name){
+            return value1Data[0]
+           },
+           value: function(value, ratio, id, index) {
+        return value2Data[index - 0];
+            }
+
+
+        },
+
+    },
+});
+
+
+		// function hideMoneySpent(){chart.hide(['Money spent']);}
+		// function showMoneySpent(){chart.show(['Money spent']);}
+		// function hideMoneyEarned(){chart.hide(['Money earned']);}
+		// function showMoneyEarned(){chart.show(['Money earned']);}
+
+     	</script>
+    </body>
+<!--     <p onclick="hideMoneySpent();">Hide Money Spent</p>
+    <p onclick="showMoneySpent();">Show Money Spent</p>
+    <p onclick="hideMoneyEarned();">Hide Money Earned</p>
+    <p onclick="showMoneyEarned();">Show Money Earned</p> -->
+
+</html>
