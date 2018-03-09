@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<style>
+@import url('https://fonts.googleapis.com/css?family=Lato');
+  body {
+    display: block;
+    margin: auto;
+    max-width: 900px;
+    background-color: transparent !important;
+  }
+
+  .names {
+    fill: none;
+    stroke: #fff;
+    stroke-linejoin: round;
+  }
+  /* legend CSS */
+
+  text {
+    font-family: Lato, sans-serif;
+    font-size: 12px !important;
+  }
+
+  .legend {
+    transform: translate(-80px, -70px);
+  }
+
+/* Yes, I scale both in the D3 code and here in the CSS. Not very pretty,
+   but not without reason: the scaling in the d3 code is responsive, and
+   I use this as a kind of 'final' scale to tighten things up (especially
+   on mobile).
+*/
+  .countries {
+    transform: scale(1.4);
+    -webkit-transform: scale(1.4);
+    -moz-transform: scale(1.4);
+    -ms-transform: scale(1.4);
+    -o-transform: scale(1.4);
+    transform: translate(20px, 0px);
+  }
+}
+
+}
+/*
+  text{
+  pointer-events:none;
+  }
+  */
+.details {
+  color: white;
+}
+h5 {
+    font-family: Lato, sans-serif;
+  height: 18px;
+  text-align: center;
+}
+
+</style>
+
+<body>
+<h5 id="kaart_subheader">Grey pressure per Dutch municipality</h5>
+
+  <!-- /container -->
+  <script src="//d3js.org/d3.v4.min.js"></script>
+  <script src="//d3js.org/queue.v1.min.js"></script>
+  <script src="//d3js.org/topojson.v1.min.js"></script>
+  <script src="//d3js.org/d3-geo-projection.v1.min.js"></script>
+  <script src='//cdnjs.cloudflare.com/ajax/libs/simple-statistics/1.0.1/simple_statistics.js'></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/d3-legend/2.11.0/d3-legend.min.js"></script>
+  <script>
+
+// Formatting and locale, Dutch
+var locale = {
+  decimal: ',',
+  thousands: '.',
+  grouping: [3],
+  currency: ['€\u00a0', ''],
+  dateTime: '%a %e %B %Y %T',
+  date: '%d-%m-%Y',
+  time: '%H:%M:%S',
+  periods: ['AM', 'PM'],
+  days: [
+    'zondag',
+    'maandag',
+    'dinsdag',
+    'woensdag',
+    'donderdag',
+    'vrijdag',
+    'zaterdag'
+  ],
+  shortDays: ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'],
+  months: [
+    'januari',
+    'februari',
+    'maart',
+    'april',
+    'mei',
+    'juni',
+    'juli',
+    'augustus',
+    'september',
+    'oktober',
+    'november',
+    'december'
+  ],
+  shortMonths: [
+    'jan',
+    'feb',
+    'mrt',
+    'apr',
+    'mei',
+    'jun',
+    'jul',
+    'aug',
+    'sep',
+    'okt',
+    'nov',
+    'dec'
+  ]
+};
+
+
+// Uncomment the line below if you want to use the Dutch locale (configured above)
+
+// d3.formatDefaultLocale(locale);
+
+// Closure function to round numbers nicely. I use ckmeans clusters as a starting point
+// for nice bins/buckets (see https://cran.r-project.org/web/packages/Ckmeans.1d.dp/index.html),
+// but them round them for readability. Not the most scientific route! If you want accuracy, you
+// can remove the rounding and use the straight ckmeans buckets.
+(function() {
+  /**
+   * Decimal adjustment of a number.
+   *
+   * @param {String}  type  The type of adjustment.
+   * @param {Number}  value The number.
+   * @param {Integer} exp   The exponent (the 10 logarithm of the adjustment base).
+   * @returns {Number} The adjusted value.
+   */
+  function decimalAdjust(type, value, exp) {
+    // If the exp is undefined or zero...
+    if (typeof exp === 'undefined' || +exp === 0) {
+      return Math[type](value);
+    }
+    value = +value;
+    exp = +exp;
+    // If the value is not a number or the exp is not an integer...
+    if (
+      value === null ||
+      isNaN(value) ||
+      !(typeof exp === 'number' && exp % 1 === 0)
+    ) {
+      return NaN;
+    }
+    // If the value is negative...
+    if (value < 0) {
+      return -decimalAdjust(type, -value, exp);
+    }
+    // Shift
+    value = value.toString().split('e');
+    value = Math[type](+(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp)));
+    // Shift back
+    value = value.toString().split('e');
+    return +(value[0] + 'e' + (value[1] ? +value[1] + exp : exp));
+  }
+
+  // Decimal round
+  if (!Math.round10) {
+    Math.round10 = function(value, exp) {
+      return decimalAdjust('round', value, exp);
+    };
+  }
+  // Decimal floor
+  if (!Math.floor10) {
+    Math.floor10 = function(value, exp) {
+      return decimalAdjust('floor', value, exp);
+    };
+  }
+  // Decimal ceil
+  if (!Math.ceil10) {
+    Math.ceil10 = function(value, exp) {
+      return decimalAdjust('ceil', value, exp);
+    };
+  }
+})();
+
+var formatNumber0dec = d3.format(',.0f');
+var formatPercentage1dec = d3.format(',.1%');
+var formatPercentage0dec = d3.format(',.0%');
+
+d3.select('body').style('overflow', 'hidden');
+
+var parentWidth = d3
+  .select('body')
+  .node()
+  .getBoundingClientRect().width;
+var margin = {
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0
+};
+var width =
+  parseInt(d3.select('body').style('width')) - margin.left - margin.right;
+var mapRatio = 0.7;
+var height = width * mapRatio;
+
+var color = d3
+  .scaleQuantile()
+  .range(['#fce3a8', '#ebc78e', '#daac75', '#c9915c', '#b67745', '#a45d2e']);
+
+var svg = d3
+  .select('body')
+  .append('svg')
+  .attr('width', width)
+  .attr('height', height)
+  .append('g')
+  .attr('class', 'map');
+
+var projection = d3
+  .geoMercator()
+  .scale(width * 8)
+  .center([5.2, 52.2])
+  .translate([width / 2.2, height / 2.3]);
+
+var path = d3.geoPath().projection(projection);
+
+queue()
+  .defer(d3.json, 'gemeenten_2017_simple.geojson')
+  .defer(d3.csv, 'grey-pressure.csv')
+  .await(ready);
+
+function ready(error, geography, data) {
+  var data_clean = data;
+
+  ///////////////
+  // UI Building
+  //////////////
+
+  var waardenlookup = {
+    jaar: 'Jaar',
+    ZS: 'Hoofdtype',
+    HS: 'Hoofdstuk',
+    CG: 'Gemeente',
+    VS: 'Versie',
+    AP: 'Aantal patiënten',
+    PV: 'Aantal patiënten per 100.000 verzekerden',
+    BE: 'Kosten (x € 1.000)',
+    BP: 'Kosten per patiënt',
+    BV: 'Kosten per 100.000 verzekerden'
+  };
+
+  var waardenlookup_reverse = {
+    Jaar: 'jaar',
+    Hoofdtype: 'ZS',
+    Hoofdstuk: 'HS',
+    Gemeente: 'CG',
+    Versie: 'VS',
+    'Aantal patiënten': 'AP',
+    'Aantal patiënten per 100.000 verzekerden': 'PV',
+    'Kosten (x € 1.000)': 'BE',
+    'Kosten per patiënt': 'BP',
+    'Kosten per 100.000 verzekerden': 'BV'
+  };
+
+  function lookup(object, my_key) {
+    return object[my_key];
+  }
+
+  var waarden = [
+    lookup(waardenlookup, 'AP'),
+    lookup(waardenlookup, 'PV'),
+    lookup(waardenlookup, 'BE'),
+    lookup(waardenlookup, 'BP'),
+    lookup(waardenlookup, 'BV')
+  ];
+
+  //////////////////////
+  ////////// Data stuff
+  /////////////////////
+
+  // Set formats
+  var formatMouseover = formatPercentage1dec;
+  var formatLegend = formatPercentage0dec;
+
+  var waarden_selected = ['Grey pressure %'];
+  var colorVariable = 'Grey pressure %';
+  var geoIDVariable = 'CG';
+  var colorVariableValueByID = {};
+  var colorVariableValueByIDExtra = {};
+
+  data.forEach(function(d) {
+    d[colorVariable] = isNaN(d[colorVariable]) ? null : +d[colorVariable];
+    colorVariableValueByID[d[geoIDVariable]] = d[colorVariable];
+  });
+
+  geography.features.forEach(function(d) {
+    d[colorVariable] = colorVariableValueByID[d.id];
+    d[geoIDVariable] = d[geoIDVariable];
+  });
+
+  // calculate ckmeans clusters
+  // then use the max value of each cluster
+  // as a break
+  var numberOfClasses = color.range().length - 1;
+  var ckmeansClusters = ss.ckmeans(
+    data.map(function(d) {
+      return d[colorVariable];
+    }),
+    numberOfClasses
+  );
+  var ckmeansBreaks = ckmeansClusters.map(function(d) {
+    return d3.min(d);
+  });
+
+  var max_value = d3.max(data, function(d) {
+    return d[colorVariable];
+  });
+  // the max value doesn't get included, push to end of array.
+  // this is hacky, but I don't know how else to fix this
+  ckmeansBreaks.push(max_value);
+
+  // nicer buckets
+  roundPower = 0;
+  ckmeansRounded = [];
+  ckmeansRounded = ckmeansBreaks.map(function(x) {
+    return Math.ceil10(x, roundPower);
+  });
+  ckmeansRounded[0] = ckmeansBreaks[0];
+  ckmeansRounded[ckmeansRounded.length - 1] =
+  ckmeansBreaks[ckmeansBreaks.length - 1];
+
+  ckmeansBreaks = ckmeansRounded;
+
+  // console.log(ckmeansBreaks)
+
+  // set the domain of the color scale based on our data
+  color.domain(ckmeansBreaks);
+
+  d3.select('#kaart_subheader').text('Grey pressure per Dutch municipality');
+
+  var quantize = color.domain(ckmeansBreaks);
+
+  svg
+    .append('g')
+    .attr('class', 'countries')
+    .selectAll('path')
+    .data(geography.features)
+    .enter()
+    .append('path')
+    .attr('vector-effect', 'non-scaling-stroke')
+    .attr('d', path)
+    .style('fill', function(d) {
+      if (colorVariable == 1) {
+        return color(colorVariableValueByID[0]);
+      }
+      if (typeof colorVariableValueByID[d.id] !== 'undefined') {
+        return color(colorVariableValueByID[d.id]);
+      }
+      return 'white';
+    })
+    .style('fill-opacity', 0.8)
+    .style('stroke', function(d) {
+      if (d[colorVariable] !== 0) {
+        return 'grey';
+      }
+      return 'grey';
+    })
+    .style('stroke-width', 0.6)
+    .style('stroke-opacity', 1)
+    .on('mouseover', function(d) {
+      if (d[colorVariable] == undefined) {
+      } else {
+        d3
+          .select(this)
+          .style('fill-opacity', 1)
+          .style('stroke-opacity', 1)
+          .style('stroke', 'grey')
+          .style('stroke-width', 0.6);
+        d3
+          .select('#kaart_subheader')
+          .text(
+            d.properties.naam +
+              ': ' +
+              // I divide the percentage by 100 here to convert them from the 0-100 range (of the dataset) into
+              // the 0-1 range.
+              formatMouseover(d[colorVariable] / 100)
+          );
+      }
+    })
+    .on('mouseout', function(d) {
+      d3
+        .select(this)
+        .style('fill-opacity', 0.8)
+        .style('stroke-opacity', 1)
+        .style('stroke-width', 0.6);
+      d3.select('#kaart_subheader').text('Grey pressure per Dutch municipality');
+    });
+
+  svg
+    .append('path')
+    .datum(
+      topojson.mesh(geography.features, function(a, b) {
+        return a.id !== b.id;
+      })
+    )
+    .attr('class', 'names')
+    .attr('d', path);
+
+
+
+
+
+////////////////////////////////
+// Simple legend ///////////////
+////////////////////////////////
+
+    // same as color.range, but with last color removed (my ckmeans implementation is hacky)
+  var colorRangeArray = ['#fce3a8', '#ebc78e', '#daac75', '#c9915c', '#b67745'];
+
+  var legendDomainText = [
+    formatLegend(color.domain()[0] / 100) + ' to ' + formatLegend(color.domain()[1]  / 100),
+    formatLegend(color.domain()[1]  / 100) + ' to ' + formatLegend(color.domain()[2]  / 100),
+    formatLegend(color.domain()[2]  / 100) + ' to ' + formatLegend(color.domain()[3]  / 100),
+    formatLegend(color.domain()[3]  / 100) + ' to ' + formatLegend(color.domain()[4]  / 100),
+    formatLegend(color.domain()[4]  / 100) + ' to ' + formatLegend(color.domain()[5]  / 100)
+  ];
+
+  var legendRectSize = 10;
+  var legendSpacing = 5;
+
+  var legend = d3
+    .select('svg')
+    .append('g')
+    .attr('class', 'legend')
+    .selectAll('g')
+    .data(colorRangeArray)
+    .enter()
+    .append('g')
+    .attr('transform', function(d, i) {
+      var height = legendRectSize;
+      var x = 100;
+      var y = 100 + i * (height + 5);
+      return 'translate(' + x + ',' + y + ')';
+    });
+
+  legend
+    .append('rect')
+    .attr('width', legendRectSize)
+    .attr('height', legendRectSize)
+    .style('fill', function(d, i) {
+      return d;
+    })
+    .style('stroke', function(d, i) {
+      return d;
+    });
+
+  legend
+    .append('text')
+    .attr('x', legendRectSize + legendSpacing)
+    .attr('y', legendRectSize)
+    .text(function(d, i) {
+      return legendDomainText[i];
+    });
+}
+
+
+  </script>
+</body>
+
+</html>

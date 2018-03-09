@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title> Filter a table with persistent URL filtering </title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Load D3.js -->
+    <script src="//d3js.org/d3.v4.min.js"></script>
+ 
+    <script src="//cdn.jsdelivr.net/npm/lodash@4.17.4/lodash.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+        crossorigin="anonymous">
+    <style>
+        body {
+            max-width: 500px;
+            margin: auto;
+        }
+
+        #chart {
+            height: 200px;
+        }
+
+        #embedDialog,
+        #copyURL {
+            cursor: pointer;
+            cursor: hand;
+        }
+
+        .check {
+            display: inline;
+            stroke-dasharray: 140;
+            stroke-dashoffset: 140;
+            -webkit-animation: fill 0.5s linear normal;
+            animation: fill 0.5s linear normal;
+            -webkit-animation-fill-mode: forwards;
+            animation-fill-mode: forwards;
+        }
+
+        @-webkit-keyframes fill {
+            from {
+                stroke-dashoffset: 140;
+            }
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes fill {
+            from {
+                stroke-dashoffset: 140;
+            }
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @media only screen and (max-width: 500px) {
+            #copyURL {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="chart"></div>
+    <div id="filter" class="form-item form-checkboxes checkbox">
+        <form method="post" action="" class="form"></form>
+    </div>
+    <div id="share">
+        <table class="unstyled">
+            <tr>
+                <td>
+                    <span id="copyURL"><button>Copy URL to clipboard</button></span>
+                    <svg id="checkthis" class="hidden" width="12px" height="12px" viewBox="0 0 59 42" version="1.1" xmlns="http://www.w3.org/2000/svg"
+                        xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
+                        <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
+                            <path d="M4.5,20.5 L21.0302753,37.0302753 L54.5,4.5" id="line" stroke="#000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"
+                                sketch:type="MSShapeGroup"></path>
+                        </g>
+                    </svg>
+                </td>
+            </tr>
+        </table>
+
+    </div>
+    <script>
+        ////////////////////////////////////////////////
+        // Copy to clipboard logic
+        ///////////////////////////////////////////////.
+
+        function copyTextToClipboard(text) {
+            var textArea = document.createElement("textarea");
+            textArea.style.position = 'fixed';
+            textArea.style.top = 0;
+            textArea.style.left = 0;
+            textArea.style.width = '2em';
+            textArea.style.height = '2em';
+            textArea.style.padding = 0;
+            textArea.style.border = 'none';
+            textArea.style.outline = 'none';
+            textArea.style.boxShadow = 'none';
+            textArea.style.background = 'transparent';
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                var successful = document.execCommand('copy');
+                var msg = successful ? 'successful' : 'unsuccessful';
+                console.log('Copying text command was ' + msg);
+            } catch (err) {
+                console.log('Oops, unable to copy');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        $('#copyURL').on('click touchstart', function () {
+            copyTextToClipboard(window.location.href)
+            $('#checkthis').attr('class', 'check');
+            setTimeout("$('#checkthis').attr('class', 'hidden')", 1500);
+        });
+
+
+        /////////////////////
+        // Begin Chart stuff
+        /////////////////////
+
+        d3.csv("data.csv", function (error, csv) {
+
+            // Build collator to sort arrays naturally (e.g. ['v001', 'v4', 'v6', 'v11', 'v1'].sort(collator.compare) outputs ["v001", "v1", "v4", "v6", "v11"] )
+            var collator = new Intl.Collator(undefined, {
+                numeric: true,
+                sensitivity: 'base'
+            });
+
+
+            /////////////////////////////////////////
+            // Data loading and checkbox rendering
+            /////////////////////////////////////////
+
+            // Filter on this column
+            var filter_on = 'Occupation'
+
+            // Building an array with the values to filter on
+            var filter_list = d3.map(csv, function (d) {
+                return d[filter_on];
+            }).keys()
+
+            // Sort filter_list naturally
+            filter_list.sort(collator.compare);
+
+            // Building the filter checkboxes
+            d3.select("#filter")
+                .selectAll("input")
+                .data(filter_list)
+                .enter()
+                .append("label")
+                .append("input")
+                .attr("type", "checkbox")
+                .attr("class", "filter-check")
+                .attr("value", function (d) {
+                    return d
+                })
+                .attr("id", function (d) {
+                    return d
+                });
+
+            d3.selectAll("label")
+                .data(filter_list)
+                .attr("class", "checkbox")
+                .append("text").text(function (d) {
+                    return " " + d
+                })
+
+
+            // Parsing URL parameters and filter data: Look at the URL parameters and adjust the data accordingly
+            // We'll use encodeURIComponent and decodeURIComponent to get the values we want to 
+            // filter on from the URL, and also to change the URL when we filter with the checkboxes
+
+            // URL parameter parse. Using a simple version, we don't need key and values, 
+            // just an URI encoded version of the value we want to sort on
+            function parseURLParameters() {
+                var query = (window.location.search || '?').substr(1),
+                    map = [];
+                query.replace(/([^&=]+)=?([^&]*)(?:&+|$)/g, function (match, key, value) {
+                    map.push(key);
+                });
+                return map;
+            }
+
+            var choices = parseURLParameters(window.location.href)
+
+            // Bad URL parameter management (e.g. if '&foo' gets tacked onto the URL, we delete it)
+            choices = _.remove(choices, function (d) {
+                return _.includes(encodeURIComponent(filter_list), d);
+            })
+
+            // var to tack behind the URL if needed
+            var URL = choices.join('&')
+
+            if (choices == undefined) {
+                var choices = []
+            } // if no parameters, change to empty array instead of undefined
+            if (choices.length > 0) {
+                // Set the URL in case the URL was messy
+                window.history.pushState({
+                    page: choices
+                }, choices, window.location.pathname + "?" + URL);
+                for (i = 0; i < choices.length; i++) {
+                    document.getElementById(decodeURIComponent(choices[i])).checked = true;
+                }
+                data = csv.filter(function (d) {
+                    return _.includes(decodeURIComponent(choices), d[filter_on])
+                });
+            } else {
+                // Set the URL in case the URL was messy
+                window.history.pushState({
+                    page: choices
+                }, choices, window.location.pathname);
+                data = csv;
+            }
+
+
+            //////////////////////////////////////////
+            // Build table for the first time
+            //////////////////////////////////////////
+
+            function tabulate(data, columns) {
+                var table = d3.select('#chart').append('table').attr("class", "table")
+                var thead = table.append('thead')
+                var tbody = table.append('tbody');
+
+                // append the header row
+                thead.append('tr')
+                    .selectAll('th')
+                    .data(columns).enter()
+                    .append('th')
+                    .text(function (column) {
+                        return column;
+                    });
+
+                // create a row for each object in the data
+                var rows = tbody.selectAll('tr')
+                    .data(data)
+                    .enter()
+                    .append('tr');
+
+                // create a cell in each row for each column
+                var cells = rows.selectAll('td')
+                    .data(function (row) {
+                        return columns.map(function (column) {
+                            return {
+                                column: column,
+                                value: row[column]
+                            };
+                        });
+                    })
+                    .enter()
+                    .append('td')
+                    .text(function (d) {
+                        return d.value;
+                    });
+
+                return table;
+            }
+
+            // render the table(s)
+            tabulate(data, ['Name', 'Last Name', 'Age', 'Occupation']); // 4 column table
+
+
+            ///////////////////////////////////
+            // Update chart on checkbox change
+            //////////////////////////////////
+            var checkBox = d3.selectAll(".filter-check")
+            checkBox.on("change", function () {
+
+
+                ////////////////////////////
+                // Manage data and URL state
+                ////////////////////////////
+
+                // When checkbox changes, refresh choices array with checked values
+                var choices = []
+                var checkboxes = document.querySelectorAll('input[type=checkbox]:checked')
+                for (var i = 0; i < checkboxes.length; i++) {
+                    choices.push(encodeURIComponent(checkboxes[i].value))
+                }
+                // feeding data filtered from choices array
+                if (choices.length > 0) {
+                    data = csv.filter(function (d, i) {
+                        return _.includes(decodeURIComponent(choices), d[filter_on]);
+                    });
+                } else {
+                    data = csv; // so that no boxes checked shows all data
+                }
+                // update url with help of new choices array
+                var URL = choices.join('&').replace(/\s/g, "=")
+                if (choices.length > 0) {
+                    window.history.pushState({
+                        page: choices
+                    }, choices, window.location.pathname + "?" + URL);
+                }
+                // remove ? at end of URL if checkboxes are empty again
+                else {
+                    window.history.pushState({
+                        page: choices
+                    }, choices, window.location.pathname);
+                }
+
+
+                /////////////////////////////////////////////////////////////////////////////////////////////
+                // Rebuilding the table
+                // (this is quick and dirty, adjust accordingly to add a proper enter, exit, update pattern)
+                /////////////////////////////////////////////////////////////////////////////////////////////
+
+                d3.select("table").remove();
+                tabulate(data, ['Name', 'Last Name', 'Age', 'Occupation']); // 4 column table
+
+
+            }); ////////////// //////////////////////////
+            // End on checkbox change update function
+            /////////////////////////////////////////
+
+        });
+    </script>
+
+</body>
+
+</html>
